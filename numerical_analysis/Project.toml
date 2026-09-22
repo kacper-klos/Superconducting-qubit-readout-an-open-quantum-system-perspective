@@ -1,0 +1,4 @@
+name = "numerical_analysis"
+uuid = "7ab76639-ef1d-4ed3-9c57-7fc0dad93b18"
+version = "0.1.0"
+authors = ["kacper-klos <kacper.klos@proton.me>"]

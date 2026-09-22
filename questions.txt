@@ -1,0 +1,13 @@
+1. Circuit quantum electrodynamics (22): Text says "The offset charge term can arise from spurious unwanted degrees of freedom in the transmon’s environment". Is it our external electron interaction, or should this term always be involved?
+
+
+2. Does section III.d describe what we want to do by coupling transmon to the harmonic bath caused by electrons?
+
+
+3. I have an issue grasping idea of \phi, especially parts of reasoning like \frac{E_j}{E_C} >> 1 => \Delta \phi << 1
+
+
+4. So work starts with equation (34) in Circuit quantum electrodynamics. Then we go to reduced transmon (36)
+
+
+5. What concrete approximations do we want to challenge?

@@ -1,0 +1,28 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-toml
+      - id: end-of-file-fixer
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell
+        args: ["-w"]
+
+  - repo: local
+    hooks:
+      - id: julia-format
+        name: Julia Formatter
+        entry: julia --project=@. -e 'using Pkg; Pkg.add("JuliaFormatter"); using JuliaFormatter; format(".", verbose=true)'
+        language: system
+        files: \.jl$
+      - id: jet-check
+        name: JET Analysis
+        entry: julia --project=@. -e 'using Pkg; Pkg.add("JET"); using JET; report_package(".")'
+        language: system
+        files: \.jl$
+        pass_filenames: false
