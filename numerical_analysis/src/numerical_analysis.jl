@@ -2,7 +2,7 @@ module Utils
 
 using LinearAlgebra
 
-function create_a(dim::Integer)
+function create_anihilator(dim::Integer)
     dim >= 1 || throw(ArgumentError("dim must be positive"))
 
     a = zeros(Float64, dim, dim)
@@ -18,8 +18,7 @@ function create_N(dim::Integer)
 end
 
 """
-Evolve a state ψ_0 specified at time t0.
-Column j of the returned matrix is the state at times[j].
+Evolve a state ψ_0 specified at time t0. Column j of the returned matrix is the state at times[j].
 """
 function time_evolution(
     H::Hermitian,
@@ -49,6 +48,7 @@ function time_evolution(
 end
 end
 
+# Simulates hamiltonian H = ω_q/2 * σ_z + ω_a a†a + g σ_x (a + a†)
 module TwoLevelTransmon
 
 using LinearAlgebra
@@ -60,7 +60,9 @@ const excited = [1.0, 0.0]
 const ground = [0.0, 1.0]
 
 function hamiltonian(dim::Integer, ω_q::Real, ω_a::Real, g::Real)
-    a = Utils.create_a(dim)
+    dim >= 1 || throw(ArgumentError("dim must be positive"))
+
+    a = Utils.create_anihilator(dim)
     N = Utils.create_N(dim)
 
     I_q = Matrix{Float64}(I, 2, 2)
@@ -97,6 +99,7 @@ end
 
 end
 
+
 module TwoLevelTransmonAnalysis
 
 using LinearAlgebra
@@ -126,6 +129,9 @@ function expected_values(
     return σ_z, N
 end
 
+"""
+Simulates the dynamics of two level transmon and plots the expected values of operators σ_z and N.
+"""
 function plot_expected_values(
     dim::Integer,
     ψ_0::AbstractVector,
@@ -143,7 +149,124 @@ function plot_expected_values(
         size = (1200, 800),
         label = [L"<\hat{σ}_z>" L"<\hat{N}>"],
         xlabel = L"\textnormal{Time} \quad [s/\hbar]",
+        title = L"ω_q = %$ω_q, ω_a = %$ω_a, g = %$g",
         linewidth = 2,
+    )
+end
+end
+
+# Simulates hamiltonian H = \sum_j(ω_j b†b)  + ω_a a†a + g (b† + b) (a + a†)
+module ArbitraryLevelSystem
+
+using LinearAlgebra
+using ..Utils
+
+function hamiltonian(
+    dim_resonator::Integer,
+    energies::AbstractVector{<:Real},
+    ω_a::Real,
+    g::Real,
+)
+    dim_resonator >= 1 || throw(ArgumentError("dim_resonator must be positive"))
+    isempty(energies) && throw(ArgumentError("energies cannot be empty"))
+
+    dim_transmon = length(energies)
+
+    a = Utils.create_anihilator(dim_resonator)
+    b = Utils.create_anihilator(dim_transmon)
+    N_a = Utils.create_N(dim_resonator)
+
+    I_a = Matrix{Float64}(I, dim_resonator, dim_resonator)
+    I_b = Matrix{Float64}(I, dim_transmon, dim_transmon)
+
+    H_b = kron(Diagonal(energies), I_a)
+    H_a = ω_a * kron(I_b, N_a)
+    H_int = g * kron(b + b', a + a')
+
+    return Hermitian(H_b + H_a + H_int)
+end
+end
+
+module ArbitraryLevelSystemAnalysis
+
+using LinearAlgebra
+using Plots
+using LaTeXStrings
+import ..ArbitraryLevelSystem
+import ..Utils
+
+function leakage_probability_evolution(
+    dim_resonator::Integer,
+    ψ_0::AbstractVector,
+    times::AbstractVector{<:Real};
+    energies::AbstractVector{<:Real},
+    ω_a::Real = 1.0,
+    g::Real = 0.05,
+    t_0::Real = 0.0,
+)
+    dim_transmon = length(energies)
+
+    dim_resonator >= 1 || throw(ArgumentError("dim_resonator must be positive"))
+    isempty(times) && throw(ArgumentError("times cannot be empty"))
+    dim_transmon >= 3 || throw(ArgumentError("At least three transmon levels are required"))
+    length(ψ_0) == dim_transmon * dim_resonator ||
+        throw(DimensionMismatch("Incorrect initial-state length"))
+    isapprox(norm(ψ_0), 1.0; atol = 1e-10, rtol = 1e-10) ||
+        throw(ArgumentError("ψ_0 must be normalized"))
+
+    H = ArbitraryLevelSystem.hamiltonian(dim_resonator, energies, ω_a, g)
+    samples = Utils.time_evolution(H, ψ_0, times; t_0 = t_0)
+
+    reshaped = reshape(samples, dim_resonator, dim_transmon, length(times))
+    outside_qubit = @view reshaped[:, 3:end, :]
+
+    return dropdims(sum(abs2, outside_qubit; dims = (1, 2)); dims = (1, 2))
+end
+
+function plot_leakage_probability_on_gap(
+    dim_resonator::Integer,
+    ψ_0::AbstractVector,
+    times::AbstractVector{<:Real},
+    α_values::AbstractVector{<:Real};
+    ω_1::Real = 1.5,
+    ω_a::Real = 1.0,
+    g::Real = 0.05,
+    t_0::Real = 0.0,
+)
+    dim_resonator >= 1 || throw(ArgumentError("dim_resonator must be positive"))
+    isempty(times) && throw(ArgumentError("times cannot be empty"))
+    isempty(α_values) && throw(ArgumentError("α_values cannot be empty"))
+    length(ψ_0) == 3 * dim_resonator ||
+        throw(DimensionMismatch("ψ_0 must have length $(3 * dim_resonator)"))
+    all(α -> 0 <= α < ω_1, α_values) || throw(ArgumentError("Require 0 ≤ α < ω_1"))
+
+    leakages = Matrix{Float64}(undef, length(α_values), length(times))
+
+    for (j, α) in enumerate(α_values)
+        energies = [0.0, ω_1, 2 * ω_1 - α]
+
+        leakages[j, :] = leakage_probability_evolution(
+            dim_resonator,
+            ψ_0,
+            times;
+            energies = energies,
+            ω_a = ω_a,
+            g = g,
+            t_0 = t_0,
+        )
+    end
+
+    return heatmap(
+        times,
+        α_values,
+        leakages;
+        xlabel = L"\textnormal{Time} [s \, \hbar]",
+        ylabel = L"\textnormal{Anharmonicity α} [1/(s \, \hbar)]",
+        colorbar_title = "Leakage probability",
+        title = L"ω_1 = %$ω_1, ω_a = %$ω_a, g = %$g",
+        c = :viridis,
+        clims = (0, 1),
+        aspect_ratio = :auto,
     )
 end
 end
