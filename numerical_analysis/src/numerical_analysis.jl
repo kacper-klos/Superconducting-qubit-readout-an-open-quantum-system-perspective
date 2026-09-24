@@ -156,7 +156,7 @@ end
 end
 
 # Simulates hamiltonian H = \sum_j(ω_j b†b)  + ω_a a†a + g (b† + b) (a + a†)
-module ArbitraryLevelSystem
+module ArbitraryLevelTransmon
 
 using LinearAlgebra
 using ..Utils
@@ -187,12 +187,12 @@ function hamiltonian(
 end
 end
 
-module ArbitraryLevelSystemAnalysis
+module ArbitraryLevelTransmonAnalysis
 
 using LinearAlgebra
 using Plots
 using LaTeXStrings
-import ..ArbitraryLevelSystem
+import ..ArbitraryLevelTransmon
 import ..Utils
 
 function leakage_probability_evolution(
@@ -214,7 +214,7 @@ function leakage_probability_evolution(
     isapprox(norm(ψ_0), 1.0; atol = 1e-10, rtol = 1e-10) ||
         throw(ArgumentError("ψ_0 must be normalized"))
 
-    H = ArbitraryLevelSystem.hamiltonian(dim_resonator, energies, ω_a, g)
+    H = ArbitraryLevelTransmon.hamiltonian(dim_resonator, energies, ω_a, g)
     samples = Utils.time_evolution(H, ψ_0, times; t_0 = t_0)
 
     reshaped = reshape(samples, dim_resonator, dim_transmon, length(times))
@@ -265,6 +265,8 @@ function plot_leakage_probability_on_gap(
         colorbar_title = "Leakage probability",
         title = L"ω_1 = %$ω_1, ω_a = %$ω_a, g = %$g",
         c = :viridis,
+        dpi = 300,
+        size = (1200, 800),
         clims = (0, 1),
         aspect_ratio = :auto,
     )
