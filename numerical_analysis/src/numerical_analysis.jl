@@ -18,7 +18,9 @@ function create_N(dim::Integer)
 end
 
 """
-Evolve a state ψ_0 specified at time t0. Column j of the returned matrix is the state at times[j].
+Evolve normalized ψ_0 from t_0 under a time-independent Hermitian H (ℏ = 1).
+Column j of the result is the state at times[j]. 
+Require nonempty times and an initial state whose length matches H and whose norm is one.
 """
 function time_evolution(
     H::Hermitian,
@@ -28,6 +30,9 @@ function time_evolution(
 )
     d = size(H, 1)
     length(ψ_0) == d || throw(DimensionMismatch("ψ_0 must have length $d"))
+    isempty(times) && throw(ArgumentError("times cannot be empty"))
+    isapprox(norm(ψ_0), 1.0; atol = 1e-10, rtol = 1e-10) ||
+        throw(ArgumentError("ψ_0 must be normalized"))
 
     eigenvalues, eigenvectors = eigen(H)
 
@@ -60,6 +65,10 @@ const excited = [1.0, 0.0]
 const ground = [0.0, 1.0]
 const dim_transmon = 2
 
+"""
+Build H = ω_q/2 * σ_z + ω_a * N + g * σ_x * (a + a†).
+The basis order is transmon ⊗ resonator.
+"""
 function hamiltonian(dim::Integer, ω_q::Real, ω_a::Real, g::Real)
     dim >= 1 || throw(ArgumentError("dim must be positive"))
 
@@ -76,6 +85,9 @@ function hamiltonian(dim::Integer, ω_q::Real, ω_a::Real, g::Real)
     return Hermitian(H_q + H_a + H_int)
 end
 
+"""
+Return the photon-number expectation for normalized ψ in transmon ⊗ resonator order.
+"""
 function expected_value_N(dim::Integer, ψ::AbstractVector)
     dim >= 1 || throw(ArgumentError("dim must be positive"))
     length(ψ) == dim_transmon * dim ||
@@ -88,6 +100,9 @@ function expected_value_N(dim::Integer, ψ::AbstractVector)
     return value
 end
 
+"""
+Return excited population minus ground population for normalized ψ.
+"""
 function expected_value_σ_z(dim::Integer, ψ::AbstractVector)
     dim >= 1 || throw(ArgumentError("dim must be positive"))
     length(ψ) == dim_transmon * dim ||
@@ -111,6 +126,9 @@ using LaTeXStrings
 import ..TwoLevelTransmon
 import ..Utils
 
+"""
+Return `(σ_z, N)`, two expectation-value vectors sampled at times.
+"""
 function expected_values(
     dim::Integer,
     ψ_0::AbstractVector,
@@ -120,12 +138,6 @@ function expected_values(
     g::Real = 0.05,
     t_0::Real = 0.0,
 )
-    dim >= 1 || throw(ArgumentError("dim must be positive"))
-    isempty(times) && throw(ArgumentError("values cannot be empty"))
-    length(ψ_0) == TwoLevelTransmon.dim_transmon * dim || throw(
-        DimensionMismatch("ψ must have length $(TwoLevelTransmon.dim_transmon * dim)"),
-    )
-
     H = TwoLevelTransmon.hamiltonian(dim, ω_q, ω_a, g)
     samples = Utils.time_evolution(H, ψ_0, times; t_0 = t_0)
 
@@ -159,6 +171,9 @@ function plot_expected_values(
     )
 end
 
+"""
+Plot excited-qubit probability summed over all resonator states.
+"""
 function plot_excited_probability(
     dim::Integer,
     ψ_0::AbstractVector,
@@ -195,6 +210,10 @@ module ArbitraryLevelTransmon
 using LinearAlgebra
 using ..Utils
 
+"""
+Build the multilevel Hamiltonian in transmon ⊗ resonator order.
+energies contains the diagonal transmon energies in basis order.
+"""
 function hamiltonian(
     dim_resonator::Integer,
     energies::AbstractVector{<:Real},
@@ -229,6 +248,10 @@ using LaTeXStrings
 import ..ArbitraryLevelTransmon
 import ..Utils
 
+"""
+Return leakage at each time by summing populations in transmon indices 3:end
+over all resonator states. The first two entries of energies define the computational subspace.
+"""
 function leakage_probability_evolution(
     dim_resonator::Integer,
     ψ_0::AbstractVector,
@@ -240,13 +263,7 @@ function leakage_probability_evolution(
 )
     dim_transmon = length(energies)
 
-    dim_resonator >= 1 || throw(ArgumentError("dim_resonator must be positive"))
-    isempty(times) && throw(ArgumentError("times cannot be empty"))
     dim_transmon >= 3 || throw(ArgumentError("At least three transmon levels are required"))
-    length(ψ_0) == dim_transmon * dim_resonator ||
-        throw(DimensionMismatch("Incorrect initial-state length"))
-    isapprox(norm(ψ_0), 1.0; atol = 1e-10, rtol = 1e-10) ||
-        throw(ArgumentError("ψ_0 must be normalized"))
 
     H = ArbitraryLevelTransmon.hamiltonian(dim_resonator, energies, ω_a, g)
     samples = Utils.time_evolution(H, ψ_0, times; t_0 = t_0)
@@ -257,6 +274,11 @@ function leakage_probability_evolution(
     return dropdims(sum(abs2, outside_qubit; dims = (1, 2)); dims = (1, 2))
 end
 
+"""
+Plot leakage versus time and anharmonicity α for a three-level transmon.
+Each α uses energies [0, ω_1, 2ω_1 - α] and the same normalized initial state.
+Heatmap rows correspond to α_values and columns to times.
+"""
 function plot_leakage_probability_on_gap(
     dim_resonator::Integer,
     ψ_0::AbstractVector,
@@ -267,11 +289,7 @@ function plot_leakage_probability_on_gap(
     g::Real = 0.05,
     t_0::Real = 0.0,
 )
-    dim_resonator >= 1 || throw(ArgumentError("dim_resonator must be positive"))
-    isempty(times) && throw(ArgumentError("times cannot be empty"))
     isempty(α_values) && throw(ArgumentError("α_values cannot be empty"))
-    length(ψ_0) == 3 * dim_resonator ||
-        throw(DimensionMismatch("ψ_0 must have length $(3 * dim_resonator)"))
     all(α -> 0 <= α < ω_1, α_values) || throw(ArgumentError("Require 0 ≤ α < ω_1"))
 
     leakages = Matrix{Float64}(undef, length(α_values), length(times))
