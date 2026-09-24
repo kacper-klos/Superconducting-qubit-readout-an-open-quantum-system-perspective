@@ -58,6 +58,7 @@ const σ_z = [1.0 0.0; 0.0 -1.0]
 const σ_x = [0.0 1.0; 1.0 0.0]
 const excited = [1.0, 0.0]
 const ground = [0.0, 1.0]
+const dim_transmon = 2
 
 function hamiltonian(dim::Integer, ω_q::Real, ω_a::Real, g::Real)
     dim >= 1 || throw(ArgumentError("dim must be positive"))
@@ -65,7 +66,7 @@ function hamiltonian(dim::Integer, ω_q::Real, ω_a::Real, g::Real)
     a = Utils.create_anihilator(dim)
     N = Utils.create_N(dim)
 
-    I_q = Matrix{Float64}(I, 2, 2)
+    I_q = Matrix{Float64}(I, dim_transmon, dim_transmon)
     I_a = Matrix{Float64}(I, dim, dim)
 
     H_q = (ω_q / 2) * kron(σ_z, I_a)
@@ -77,7 +78,8 @@ end
 
 function expected_value_N(dim::Integer, ψ::AbstractVector)
     dim >= 1 || throw(ArgumentError("dim must be positive"))
-    length(ψ) == 2 * dim || throw(DimensionMismatch("ψ must have length $(2 * dim)"))
+    length(ψ) == dim_transmon * dim ||
+        throw(DimensionMismatch("ψ must have length $(dim_transmon * dim)"))
 
     value = 0.0
     for n = 0:(dim-1)
@@ -88,7 +90,8 @@ end
 
 function expected_value_σ_z(dim::Integer, ψ::AbstractVector)
     dim >= 1 || throw(ArgumentError("dim must be positive"))
-    length(ψ) == 2 * dim || throw(DimensionMismatch("ψ must have length $(2 * dim)"))
+    length(ψ) == dim_transmon * dim ||
+        throw(DimensionMismatch("ψ must have length $(dim_transmon * dim)"))
 
     value = 0.0
     for j = 1:dim
@@ -119,7 +122,9 @@ function expected_values(
 )
     dim >= 1 || throw(ArgumentError("dim must be positive"))
     isempty(times) && throw(ArgumentError("values cannot be empty"))
-    length(ψ_0) == 2 * dim || throw(DimensionMismatch("ψ must have length $(2 * dim)"))
+    length(ψ_0) == TwoLevelTransmon.dim_transmon * dim || throw(
+        DimensionMismatch("ψ must have length $(TwoLevelTransmon.dim_transmon * dim)"),
+    )
 
     H = TwoLevelTransmon.hamiltonian(dim, ω_q, ω_a, g)
     samples = Utils.time_evolution(H, ψ_0, times; t_0 = t_0)
@@ -148,6 +153,35 @@ function plot_expected_values(
         dpi = 300,
         size = (1200, 800),
         label = [L"<\hat{σ}_z>" L"<\hat{N}>"],
+        xlabel = L"\textnormal{Time} \quad [s/\hbar]",
+        title = L"ω_q = %$ω_q, ω_a = %$ω_a, g = %$g",
+        linewidth = 2,
+    )
+end
+
+function plot_excited_probability(
+    dim::Integer,
+    ψ_0::AbstractVector,
+    times::AbstractVector{<:Real};
+    ω_q::Real = 1.0,
+    ω_a::Real = 1.0,
+    g::Real = 0.05,
+    t_0::Real = 0.0,
+)
+    H = TwoLevelTransmon.hamiltonian(dim, ω_q, ω_a, g)
+    samples = Utils.time_evolution(H, ψ_0, times; t_0 = t_0)
+
+    reshaped = reshape(samples, dim, TwoLevelTransmon.dim_transmon, length(times))
+    excited_qubit = @view reshaped[:, 1, :]
+
+    probabilities = vec(sum(abs2, excited_qubit; dims = 1))
+
+    return plot(
+        times,
+        probabilities,
+        dpi = 300,
+        size = (1200, 800),
+        label = L"P(|e>)",
         xlabel = L"\textnormal{Time} \quad [s/\hbar]",
         title = L"ω_q = %$ω_q, ω_a = %$ω_a, g = %$g",
         linewidth = 2,
@@ -216,7 +250,7 @@ function leakage_probability_evolution(
 
     H = ArbitraryLevelTransmon.hamiltonian(dim_resonator, energies, ω_a, g)
     samples = Utils.time_evolution(H, ψ_0, times; t_0 = t_0)
-
+    # Probability of being outside qubit subsystem.
     reshaped = reshape(samples, dim_resonator, dim_transmon, length(times))
     outside_qubit = @view reshaped[:, 3:end, :]
 
