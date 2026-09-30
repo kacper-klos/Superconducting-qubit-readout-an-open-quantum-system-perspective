@@ -2,7 +2,7 @@
 
 julia_version = "1.13.0"
 manifest_format = "2.1"
-project_hash = "9edc420921a320f5f9ab7dce57bc5f924526f883"
+project_hash = "9c374ed088bf6f5f8a0fd89b72ddb2e11de7c797"
 
 [[deps.AliasTables]]
 deps = ["PtrArrays", "Random"]
@@ -256,6 +256,13 @@ git-tree-sha1 = "9d9531a9cb63a9edc33836414e82a07e81710de2"
 registries = "General"
 uuid = "2e76f6c2-a576-52d4-95c1-20adfe4de566"
 version = "100.14004.0+0"
+
+[[deps.Hungarian]]
+deps = ["LinearAlgebra", "SparseArrays"]
+git-tree-sha1 = "4f84db415ccb0ea750b10738bfecdd55388fd1b6"
+registries = "General"
+uuid = "e91730f6-4275-51fb-a7a0-7064cfbd3b39"
+version = "0.7.0"
 
 [[deps.InteractiveUtils]]
 deps = ["Markdown"]
@@ -1138,7 +1145,7 @@ uuid = "8e850ede-7688-5339-a07c-302acd2aaf8d"
 version = "1.67.1+0"
 
 [[deps.numerical_analysis]]
-deps = ["LaTeXStrings", "Plots"]
+deps = ["Hungarian", "LaTeXStrings", "Plots"]
 path = "."
 uuid = "7ab76639-ef1d-4ed3-9c57-7fc0dad93b18"
 version = "0.1.0"
