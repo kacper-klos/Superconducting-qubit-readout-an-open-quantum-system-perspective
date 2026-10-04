@@ -6,32 +6,47 @@ using .TwoLevelTransmonAnalysis
 using .TwoLevelTransmon
 using .ArbitraryLevelTransmonAnalysis
 
+include("transmon-resonator.jl")
+using .TransmonResonatorAnalysis
+
 const IMAGES_PATH = joinpath(@__DIR__, "..", "..", "images")
 
-leakage_heatmap = ArbitraryLevelSystemAnalysis.plot_leakage_probability_on_gap(
-    7,
-    kron(1.0 .* (1:3 .== 2), 1.0 .* (1:7 .== 2)),
-    0.0:0.001:200.0,
-    range(0.0, 0.5, length = 80),
+# leakage_heatmap = ArbitraryLevelSystemAnalysis.plot_leakage_probability_on_gap(
+#     7,
+#     kron(1.0 .* (1:3 .== 2), 1.0 .* (1:7 .== 2)),
+#     0.0:0.001:200.0,
+#     range(0.0, 0.5, length = 80),
+# )
+# savefig(leakage_heatmap, normpath(joinpath(IMAGES_PATH, "leakage_heatmap.png")))
+#
+# qubit_expectation_plot = TwoLevelTransmonAnalysis.plot_expected_values(
+#     7,
+#     kron(TwoLevelTransmon.excited, 1.0 .* (1:7 .== 1)),
+#     0.0:0.001:200.0,
+# )
+# savefig(
+#     qubit_expectation_plot,
+#     normpath(joinpath(IMAGES_PATH, "qubit_expectation_values.png")),
+# )
+#
+# qubit_excited_probability = TwoLevelTransmonAnalysis.plot_excited_probability(
+#     7,
+#     kron(TwoLevelTransmon.excited, 1.0 .* (1:7 .== 1)),
+#     0.0:0.001:200.0,
+# )
+# savefig(
+#     qubit_excited_probability,
+#     normpath(joinpath(IMAGES_PATH, "qubit_excited_probability.png")),
+# )
+energy_changes_plot = TransmonResonatorAnalysis.plot_energy_evolution(
+    2,
+    2,
+    8,
+    12,
+    0.25,
+    12.5,
+    4.6,
+    0.45;
+    steps = 200,
 )
-savefig(leakage_heatmap, normpath(joinpath(IMAGES_PATH, "leakage_heatmap.png")))
-
-qubit_expectation_plot = TwoLevelTransmonAnalysis.plot_expected_values(
-    7,
-    kron(TwoLevelTransmon.excited, 1.0 .* (1:7 .== 1)),
-    0.0:0.001:200.0,
-)
-savefig(
-    qubit_expectation_plot,
-    normpath(joinpath(IMAGES_PATH, "qubit_expectation_values.png")),
-)
-
-qubit_excited_probability = TwoLevelTransmonAnalysis.plot_excited_probability(
-    7,
-    kron(TwoLevelTransmon.excited, 1.0 .* (1:7 .== 1)),
-    0.0:0.001:200.0,
-)
-savefig(
-    qubit_excited_probability,
-    normpath(joinpath(IMAGES_PATH, "qubit_excited_probability.png")),
-)
+savefig(energy_changes_plot, normpath(joinpath(IMAGES_PATH, "energy_change.png")))
