@@ -1,0 +1,227 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+\usepackage{amsmath,amssymb}
+\usepackage{braket}
+
+\usepackage[margin=25mm,headheight=15pt,headsep=8mm]{geometry}
+\usepackage{fancyhdr}
+\usepackage{needspace}
+\usepackage{titling}
+\setlength{\droptitle}{-12mm}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5\baselineskip plus 1pt minus 1pt}
+\setlength{\jot}{5pt}
+\setlength{\emergencystretch}{2em}
+\raggedbottom
+\clubpenalty=10000
+\widowpenalty=10000
+\displaywidowpenalty=10000
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\nouppercase{Superconducting qubit readout}}
+\fancyhead[R]{\small Kacper Kłos}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+  pdftitle={Superconducting qubit readout: an open quantum system perspective},
+  pdfauthor={Kacper Klos}
+}
+\numberwithin{equation}{section}
+
+\title{Superconducting qubit readout:\\[0.3em]
+  \large An open quantum system perspective}
+\author{Kacper Kłos}
+\date{}
+
+\begin{document}
+\maketitle
+\thispagestyle{plain}
+
+\section{Transmon--resonator system}
+
+We begin our analysis of the transmon--resonator system with the Hamiltonian
+given in Eq.~(31) of Blais et al.~\cite{Blais2021}:
+\begin{equation}
+  \hat H = 4E_C(\hat n+\hat n_r)^2-E_J\cos\varphi +\sum_m\hbar\omega_m\hat a_m^\dagger\hat a_m,
+\end{equation}
+where $\hat n_r=\sum_m\hat n_m$.
+
+We separate this Hamiltonian into three contributions: the transmon
+Hamiltonian $\hat H_t$, the resonator Hamiltonian $\hat H_r$, and their
+interaction $\hat H_i$:
+\begin{align}
+  \hat H   &= \hat H_t+\hat H_r+\hat H_i, \\
+  \hat H_t &= 4E_C\hat n^2-E_J\cos\varphi, \\
+  \hat H_r &= 4E_C\hat n_r^2 +\sum_m\hbar\omega_m\hat a_m^\dagger\hat a_m, \\
+  \hat H_i &= 8E_C\hat n\hat n_r.
+\end{align}
+We examine each contribution in turn.
+
+\subsection{Transmon Hamiltonian}
+
+To determine how $\cos\hat\varphi$ acts on a charge state $\ket{n}$,
+we first relate the operators $\hat\varphi$ and $\hat n$.
+Using $\hat n=\hat Q/(2e)$, $\hat\varphi=(2e/\hbar)\hat\Phi$, and
+$[\hat\Phi,\hat Q]=i$, we obtain
+\begin{equation}
+  [\hat\varphi,\hat n] =\frac{1}{\hbar}[\hat\Phi,\hat Q]=i.
+\end{equation}
+We can then determine the action of $e^{i\hat\varphi}$ on $\ket{n}$.
+Hadamard's lemma gives
+\begin{equation}
+  \begin{aligned}
+    e^{i\hat\varphi}\hat n e^{-i\hat\varphi}
+      &=\hat n+[i\hat\varphi,\hat n]
+        +\frac12[i\hat\varphi,[i\hat\varphi,\hat n]]\\
+      &=\hat n-1.
+  \end{aligned}
+\end{equation}
+It follows that
+\begin{equation}
+  \hat n\bigl(e^{-i\hat\varphi}\ket{n}\bigr) =(n-1)e^{-i\hat\varphi}\ket{n}.
+\end{equation}
+Thus, $e^{-i\hat\varphi}\ket{n}$ is an eigenstate of $\hat n$ with
+eigenvalue $n-1$. Applying the same reasoning to
+$e^{i\hat\varphi}\ket{n}$ gives
+$e^{\pm i\hat\varphi}\ket{n}=\ket{n\pm1}$.
+Together with
+$\cos\varphi=\tfrac12(e^{i\hat\varphi}+e^{-i\hat\varphi})$,
+this determines the action of the transmon Hamiltonian:
+\begin{equation}
+  \hat H_t\ket{n} =4E_Cn^2\ket{n} -\frac{E_J}{2}\bigl(\ket{n+1}+\ket{n-1}\bigr).
+\end{equation}
+
+\subsection{Resonator Hamiltonian}
+
+The relations needed to expand the resonator Hamiltonian are
+\begin{equation}
+  \begin{aligned}
+    \hat n_m &=\frac{C_g}{2e\,C_m}\hat Q_m,\\
+    \hat Q_m &=i\sqrt{\frac{\hbar C_m\omega_m}{2}}
+      (\hat a_m^\dagger-\hat a_m).
+  \end{aligned}
+\end{equation}
+Consequently,
+\begin{equation}
+  \hat n_m=i\eta_m(\hat a_m^\dagger-\hat a_m),
+  \qquad
+  \eta_m=\frac{C_g}{2e}\sqrt{\frac{\hbar\omega_m}{2C_m}}.
+\end{equation}
+We now adopt a single-mode approximation, retaining only one resonator
+mode. Substituting these expressions into $\hat H_r$ and omitting
+constant terms gives
+\begin{equation}
+  \hat H_r =(8E_C\eta^2+\hbar\omega_0)\hat a^\dagger\hat a -4E_C\eta^2\bigl((\hat a^\dagger)^2+\hat a^2\bigr).
+\end{equation}
+To simplify this Hamiltonian, we introduce a Bogoliubov transformation:
+\begin{align}
+  \hat{\tilde a}
+    &=\cosh(r)\hat a-\sinh(r)\hat a^\dagger, \\
+  \hat a
+    &=\cosh(r)\hat{\tilde a}+\sinh(r)\hat{\tilde a}^\dagger, \\
+  [\hat{\tilde a},\hat{\tilde a}^\dagger]
+    &=\cosh^2(r)-\sinh^2(r)=1.
+\end{align}
+Substituting into the operator products appearing in $\hat H_r$ yields
+\begin{equation}
+  \begin{aligned}
+    \hat a^\dagger\hat a
+      &=(\cosh(r)\hat{\tilde a}^\dagger+\sinh(r)\hat{\tilde a}) (\cosh(r)\hat{\tilde a}+\sinh(r)\hat{\tilde a}^\dagger) \\
+      &=\frac12\sinh(2r) \bigl((\hat{\tilde a}^\dagger)^2+\hat{\tilde a}^2\bigr)+\cosh(2r)\hat{\tilde a}^\dagger\hat{\tilde a}
+          +\sinh^2(r), \\
+    \hat a^2
+      &=\cosh^2(r)\hat{\tilde a}^2+\sinh^2(r)(\hat{\tilde a}^\dagger)^2+\sinh(2r)\left(\hat{\tilde a}^\dagger\hat{\tilde a}+\frac12\right), \\
+    (\hat{\tilde a}^\dagger)^2+\hat{\tilde a}^2
+      &=\cosh(2r)\bigl((\hat a^\dagger)^2+\hat a^2\bigr)+\sinh(2r) \bigl(2\hat{\tilde a}^\dagger\hat{\tilde a}+1\bigr).
+  \end{aligned}
+\end{equation}
+For compactness, define
+\begin{equation}
+  A=8E_C\eta^2+\hbar\omega_0,
+  \qquad B=4E_C\eta^2.
+\end{equation}
+Substituting the preceding expressions into $\hat H_r$ gives
+\begin{equation}
+  \begin{aligned}
+    \hat H_r
+      &=\bigl(A\cosh(2r)-2B\sinh(2r)\bigr)
+        \hat{\tilde a}^\dagger\hat{\tilde a}+\left(\frac A2\sinh(2r)-B\cosh(2r)\right) \bigl((\hat{\tilde a}^\dagger)^2+\hat{\tilde a}^2\bigr)+\text{const.}
+  \end{aligned}
+\end{equation}
+We choose $r$ so that the terms quadratic in the creation or annihilation
+operator cancel:
+\begin{equation}
+  \begin{aligned}
+    \tanh(2r)
+      &=\frac{2B}{A}=\frac{8E_C\eta^2}{\hbar\omega_r},\\[3pt]
+    r 
+      &=\frac14\ln\left(\frac{A+2B}{A-2B}\right)
+      =\frac14\ln\left(1+\frac{16E_C\eta^2}{\hbar\omega_0}\right).
+  \end{aligned}
+\end{equation}
+In the final Hamiltonian, we denote the transformed operator
+$\hat{\tilde a}$ by $\hat a$ for simplicity. The transformation must
+nevertheless be accounted for when expressing the interaction term.
+The resonator Hamiltonian becomes
+\begin{equation}
+  \hat H_r=\hbar\omega\hat a^\dagger\hat a+\text{const.},
+\end{equation}
+where
+\begin{equation}
+  \begin{aligned}
+    \hbar\omega
+      &=A\cosh(2r)-2B\sinh(2r)\\
+      &=\sqrt{A^2-4B^2}
+       =\omega_0\sqrt{1+\frac{16E_C\eta^2}{\hbar\omega_0}}.
+  \end{aligned}
+\end{equation}
+Here we have used standard hyperbolic-function identities to obtain
+$\omega$. In this form, the action of $\hat H_r$ on its eigenstates
+$\ket{j}$ is immediate.
+
+\subsection{Interaction Hamiltonian}
+
+In addition to the approximation introduced for the resonator, we must
+account for the change in the creation and annihilation operators under
+the Bogoliubov transformation:
+\begin{equation}
+  \begin{aligned}
+    \hat a^\dagger-\hat a
+      &=\bigl(\cosh(r)-\sinh(r)\bigr) (\hat{\tilde a}^\dagger-\hat{\tilde a})\\
+      &=e^{-r}(\hat{\tilde a}^\dagger-\hat{\tilde a}).
+  \end{aligned}
+\end{equation}
+As in the preceding subsection, we use $\hat a$ to denote the
+transformed annihilation operator in the final expression:
+\begin{equation}
+  \hat H_i
+  =8iE_C\eta\hat n e^{-r}(\hat a^\dagger-\hat a)
+  =ig(\hat a^\dagger-\hat a).
+\end{equation}
+
+\subsection{Total Hamiltonian}
+
+Combining the contributions above gives
+\begin{equation}
+    \hat H
+      =4E_C\hat n^2 -\frac{E_J}{2}(e^{i\varphi}+e^{-i\varphi})+\hbar\omega\hat a^\dagger\hat a+ig(\hat a^\dagger-\hat a).
+\end{equation}
+We express this Hamiltonian in the basis of Cooper-pair charge states
+associated with the Josephson junction and dressed-photon states of the
+resonator.
+
+\newpage
+
+\bibliographystyle{unsrtnat}
+\bibliography{references}
+
+\end{document}
